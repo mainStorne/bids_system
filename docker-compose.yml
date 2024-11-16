@@ -1,0 +1,110 @@
+
+#include:
+#  - path: docker-compose/bot.yml
+#    project_directory: .
+#  - path: docker-compose/server.yml
+#    project_directory: .
+
+services:
+#
+#  frontend:
+#    build:
+#      context: frontend
+#      dockerfile: Dockerfile
+#    container_name: frontend
+#    volumes:
+#      - ./frontend/src:/app/src
+
+  postgres:
+    image: postgres
+    env_file:
+      - ./.env
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+       - "8001:8001"
+       - "6379:6379"
+    container_name: redis
+    volumes:
+      - redis_volume:/data
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8002:80"
+    container_name: pgadmin4
+    volumes:
+      - pgadmin_volume:/var/lib/pgadmin
+    
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@example.com
+      - PGADMIN_DEFAULT_PASSWORD=12345
+
+    depends_on:
+      - postgres
+
+
+  backend:
+    build:
+      context: ./bids_system
+      dockerfile: ./web.Dockerfile
+    volumes:
+      - ./bids_system/src/web:/src/web
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+
+    depends_on:
+      - redis
+      - postgres
+    container_name: backend
+    expose:
+      - 80
+
+
+
+
+  nginx:
+   container_name: nginx
+   image: nginx:latest
+   ports:
+     - "80:80"
+   volumes:
+     - ./nginx:/etc/nginx
+    #  - ./backend/src/web/app/static:/www/data
+   depends_on:
+     - backend
+    #  - frontend
+
+#  ngrok:
+#    image: ngrok/ngrok:latest
+#    network_mode: host
+#    container_name: ngrok
+#    expose:
+#      - 443
+#    environment:
+#      NGROK_AUTHTOKEN: 2ibfdY2tcsIyNHkUbJvkS8jspgM_83EGWAhJqnuHKVYEHmmfa
+#    command: ["http", "--url=musical-pheasant-major.ngrok-free.app", "80"]
+#    depends_on:
+#      - nginx
+##    command: ngrok http 80
+#    - "http"
+#    -
+#    - "80"
+
+
+volumes:
+  redis_volume: {}
+  pgdata: {}
+  pgadmin_volume:
