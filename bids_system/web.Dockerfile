@@ -16,4 +16,5 @@ WORKDIR /src/web
 RUN chmod +x alembic.sh
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH='/src:$PYTHONPATH'
+ENTRYPOINT [ "/src/web/alembic.sh" ]
 CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
