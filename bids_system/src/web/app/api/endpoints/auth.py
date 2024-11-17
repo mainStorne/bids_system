@@ -75,7 +75,9 @@ logout_responses: OpenAPIResponseType = {
 
 
 @r.post(
-    "/logout", name=f"auth:{backend.name}.logout", responses=logout_responses
+    "/logout", name=f"auth:{backend.name}.logout", responses=logout_responses,
+    status_code=status.HTTP_204_NO_CONTENT,
+
 )
 async def logout(
         user_token: tuple[models.UP, str] = Depends(get_current_user_token),
