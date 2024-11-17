@@ -1,13 +1,12 @@
 from fastapi_users.authentication.backend import AuthenticationBackend
-from fastapi_users.authentication.transport import BearerTransport
+from ..authentication.transport import BearerTransport
 from ..authentication.authenticator import Authenticator
 from ..authentication.strategy import JWTStrategy
 from ..conf import settings
 from ..managers.users import UsersManager
-from ..storage.db.models import User
 from ..dependencies.session import get_session
 
-transport = BearerTransport('auth/jwt/login')
+transport = BearerTransport('auth/jwt/login', scopes={'costumer': 'request bids'})
 
 
 def get_strategy():

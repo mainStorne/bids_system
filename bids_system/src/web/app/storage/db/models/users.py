@@ -1,3 +1,4 @@
+from fastapi_permissions import Allow
 from sqlalchemy import SmallInteger, ForeignKey, String, Boolean, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, IDMixin
@@ -21,12 +22,24 @@ class User(IDMixin, Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
 
-    type_id: Mapped[int] = mapped_column(ForeignKey('user_types.id'))
-    type: Mapped['UserType'] = relationship(back_populates='user')
+    def principals(self):
+        return [role.name for role in self.roles] + ['role:admin'] if self.is_superuser else []
 
 
-class UserType(IDMixin, Base):
-    __tablename__ = 'user_types'
+class UserRole(IDMixin, Base):
+    __tablename__ = 'user_roles'
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'))
+
+
+class Role(IDMixin, Base):
+    __tablename__ = 'roles'
     name: Mapped[str] = mapped_column(String(length=90), unique=True)
-    user: Mapped['User'] = relationship(back_populates='type')
+    users: Mapped[list['User']] = relationship(back_populates='roles', secondary='user_roles')
+
+    def __acl__(self):
+        return [
+            (Allow, f'{self.name}', 'view'),
+        ]

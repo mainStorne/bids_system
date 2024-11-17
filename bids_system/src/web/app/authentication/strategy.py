@@ -4,6 +4,7 @@ from fastapi_users import BaseUserManager, models
 from fastapi_users.jwt import decode_jwt, generate_jwt
 from fastapi_users.authentication.strategy import JWTStrategy as _JWTStrategy
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from ..storage.db.models import User
 class JWTStrategy(_JWTStrategy):
 
@@ -22,8 +23,7 @@ class JWTStrategy(_JWTStrategy):
                 return None
         except (jwt.PyJWTError, ValueError):
             return None
-
-        return await session.get(User, user_id)
+        return await session.get(User, user_id, options=[joinedload(User.roles, innerjoin=True)])
 
 
     async def write_token(self, user: User) -> str:

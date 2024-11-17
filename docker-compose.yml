@@ -25,6 +25,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
 
 
 
@@ -66,8 +68,11 @@ services:
       REDIS_HOST: redis
 
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
     container_name: backend
     expose:
       - 80

@@ -14,8 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 
 class Factory(SQLAlchemyFactory):
-    __is_base_factory__ = True
-    __set_relationships__ = False
+    __set_relationships__ = True
 
 
 # revision identifiers, used by Alembic.
@@ -30,7 +29,6 @@ def upgrade() -> None:
     async def seed_db(connection: AsyncConnection):
         session = AsyncSession(bind=connection)
         Factory.__async_session__ = session
-        factory = Factory.create_factory(User)
         await factory.create_batch_async(10)
 
 

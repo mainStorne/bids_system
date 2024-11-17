@@ -8,7 +8,7 @@ class ErrorModel(BaseModel):
     detail: Union[str, dict[str, str]]
 
 
-not_a_superuser_response = {
+forbidden_response = {
     status.HTTP_403_FORBIDDEN: {
         "description": "Not a superuser.",
     },
@@ -27,7 +27,10 @@ missing_token_or_inactive_user_response = {
     },
 }
 
-auth_responses = {**not_a_superuser_response, **missing_token_or_inactive_user_response}
+auth_responses = {**forbidden_response, **missing_token_or_inactive_user_response}
+
+
+
 
 not_found_response = {
     status.HTTP_404_NOT_FOUND: {
