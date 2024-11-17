@@ -6,9 +6,13 @@ from fastapi_users.authentication.authenticator import Authenticator as _Authent
     EnabledBackendsDependency, name_to_variable_name, name_to_strategy_variable_name
 from makefun import with_signature
 from logging import getLogger
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..storage.db.models import User
 
 logger = getLogger(__name__)
+
 
 class Authenticator(_Authenticator):
 
@@ -20,103 +24,6 @@ class Authenticator(_Authenticator):
         self.get_session = get_session
         self.backends = backends
 
-    def current_user_token(
-            self,
-            optional: bool = False,
-            active: bool = False,
-            verified: bool = False,
-            superuser: bool = False,
-            get_enabled_backends: Optional[
-                EnabledBackendsDependency
-            ] = None,
-            raise_on_absense: bool = False,
-    ):
-        """
-        Return a dependency callable to retrieve currently authenticated user and token.
-
-        :param optional: If `True`, `None` is returned if there is no authenticated user
-        or if it doesn't pass the other requirements.
-        Otherwise, throw `401 Unauthorized`. Defaults to `False`.
-        Otherwise, an exception is raised. Defaults to `False`.
-        :param active: If `True`, throw `401 Unauthorized` if
-        the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
-        the authenticated user is not verified. Defaults to `False`.
-        :param superuser: If `True`, throw `403 Forbidden` if
-        the authenticated user is not a superuser. Defaults to `False`.
-        :param get_enabled_backends: Optional dependency callable returning
-        a list of enabled authentication backends.
-        Useful if you want to dynamically enable some authentication backends
-        based on external logic, like a configuration in database.
-        By default, all specified authentication backends are enabled.
-        Please not however that every backends will appear in the OpenAPI documentation,
-        as FastAPI resolves it statically.
-        """
-        signature = self._get_dependency_signature(get_enabled_backends)
-
-        @with_signature(signature)
-        async def current_user_token_dependency(*args: Any, **kwargs: Any):
-            return await self._authenticate(
-                *args,
-                optional=optional,
-                active=active,
-                verified=verified,
-                superuser=superuser,
-                raise_on_absense=raise_on_absense,
-                **kwargs,
-            )
-
-        return current_user_token_dependency
-
-    def current_user(
-            self,
-            optional: bool = False,
-            active: bool = False,
-            verified: bool = False,
-            superuser: bool = False,
-            get_enabled_backends: Optional[
-                EnabledBackendsDependency
-            ] = None,
-            raise_on_absense: bool = False,
-    ):
-        """
-        Return a dependency callable to retrieve currently authenticated user.
-
-        :param optional: If `True`, `None` is returned if there is no authenticated user
-        or if it doesn't pass the other requirements.
-        Otherwise, throw `401 Unauthorized`. Defaults to `False`.
-        Otherwise, an exception is raised. Defaults to `False`.
-        :param active: If `True`, throw `401 Unauthorized` if
-        the authenticated user is inactive. Defaults to `False`.
-        :param verified: If `True`, throw `401 Unauthorized` if
-        the authenticated user is not verified. Defaults to `False`.
-        :param superuser: If `True`, throw `403 Forbidden` if
-        the authenticated user is not a superuser. Defaults to `False`.
-        :param get_enabled_backends: Optional dependency callable returning
-        a list of enabled authentication backends.
-        Useful if you want to dynamically enable some authentication backends
-        based on external logic, like a configuration in database.
-        By default, all specified authentication backends are enabled.
-        Please not however that every backends will appear in the OpenAPI documentation,
-        as FastAPI resolves it statically.
-        """
-        signature = self._get_dependency_signature(get_enabled_backends)
-
-        @with_signature(signature)
-        async def current_user_dependency(*args: Any, **kwargs: Any):
-            user, _ = await self._authenticate(
-                *args,
-                optional=optional,
-                active=active,
-                verified=verified,
-                superuser=superuser,
-                raise_on_absense=raise_on_absense,
-                **kwargs,
-            )
-            return user
-
-        return current_user_dependency
-
     async def _authenticate(self, *args,
                             optional: bool = False,
                             active: bool = False,
@@ -124,7 +31,7 @@ class Authenticator(_Authenticator):
                             superuser: bool = False,
                             get_enabled_backends: Optional[
                                 EnabledBackendsDependency] = None,
-                            raise_on_absense: bool, session, **kwargs) -> tuple[Optional[User], Optional[str]]:
+                            session, **kwargs) -> tuple[Optional[User], Optional[str]]:
         user: User | None = None
         token: Optional[str] = None
         enabled_backends: Sequence[AuthenticationBackend] = (
@@ -138,24 +45,25 @@ class Authenticator(_Authenticator):
                 ]
                 if token is not None:
                     user = await strategy.read_token(token, session)
-                    logger.info(user)
                     if user:
-                        return user, token
+                        break
 
-        if raise_on_absense:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-        #
-        # if user:
-        #     status_code = status.HTTP_403_FORBIDDEN
-        #     if active and not user.is_active:
-        #         status_code = status.HTTP_401_UNAUTHORIZED
-        #         user = None
-        #     elif (
-        #         verified and not user.is_verified or superuser and not user.is_superuser
-        #     ):
-        #         user = None
-        # if not user and not optional:
-        #     raise HTTPException(status_code=status_code)
+        status_code = status.HTTP_401_UNAUTHORIZED
+        if user:
+            status_code = status.HTTP_403_FORBIDDEN
+            if active and not user.is_active:
+                status_code = status.HTTP_401_UNAUTHORIZED
+                user = None
+            elif (
+                    verified and not user.is_verified or superuser and not user.is_superuser
+            ):
+                user = None
+        if not user and not optional:
+            raise HTTPException(status_code=status_code)
+
+        return user, token
+
+
 
     def _get_dependency_signature(
             self, get_enabled_backends: Optional[EnabledBackendsDependency] = None

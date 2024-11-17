@@ -1,4 +1,4 @@
-from fastapi_permissions import Allow
+from fastapi_permissions import Allow, Deny
 from sqlalchemy import SmallInteger, ForeignKey, String, Boolean, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, IDMixin
@@ -24,8 +24,9 @@ class User(IDMixin, Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
 
-    def principals(self):
-        return [role.name for role in self.roles] + ['role:admin'] if self.is_superuser else []
+    async def principals(self):
+        roles = await self.awaitable_attrs.roles
+        return [role.name for role in roles] + ['role:admin'] if self.is_superuser else []
 
 
 class UserRole(IDMixin, Base):
@@ -42,4 +43,5 @@ class Role(IDMixin, Base):
     def __acl__(self):
         return [
             (Allow, f'{self.name}', 'view'),
+            (Allow, 'role:admin', 'view'),
         ]

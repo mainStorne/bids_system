@@ -10,7 +10,7 @@ class ErrorModel(BaseModel):
 
 forbidden_response = {
     status.HTTP_403_FORBIDDEN: {
-        "description": "Not a superuser.",
+        "description": "Insufficient permissions",
     },
 }
 

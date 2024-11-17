@@ -23,7 +23,7 @@ class JWTStrategy(_JWTStrategy):
                 return None
         except (jwt.PyJWTError, ValueError):
             return None
-        return await session.get(User, user_id, options=[joinedload(User.roles, innerjoin=True)])
+        return await session.get(User, user_id)
 
 
     async def write_token(self, user: User) -> str:

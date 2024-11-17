@@ -1,13 +1,13 @@
-from typing import Iterable, Any, Optional
+from typing import Iterable, Any, Optional, Callable, List
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_sqlalchemy_toolkit.model_manager import CreateSchemaT, ModelT
 from fastapi_users.manager import BaseUserManager
 from fastapi_users.password import PasswordHelperProtocol, PasswordHelper
-from sqlalchemy import UnaryExpression, select
+from sqlalchemy import UnaryExpression, select, Select, Row
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute
-from ..storage.db.models import User
+from sqlalchemy.orm import InstrumentedAttribute, joinedload
+from ..storage.db.models import User, Role, UserRole
 from .base import BaseManager
 
 
@@ -32,8 +32,17 @@ class UsersManager(BaseManager):
             commit: bool = True,
             **attrs: Any,
     ) -> ModelT:
-        in_obj.password = self.password_helper.hash(in_obj.password)
-        return await super().create(session, in_obj, refresh_attribute_names, commit=commit, **attrs)
+        async with session.begin():
+            in_obj.password = self.password_helper.hash(in_obj.password)
+
+            user = await super().create(session, in_obj, ['roles'], commit=False, roles=[], **attrs)
+            stmt = select(Role).where(Role.name == 'role:costumer')
+            costumer_role = await session.scalar(stmt)
+            user_role = Role(name=f'user:{user.login}')
+            user.roles = [costumer_role, user_role]
+
+        return user
+
 
 
     async def authenticate(self, session: AsyncSession, credentials: OAuth2PasswordRequestForm):

@@ -29,13 +29,9 @@ class CreateUser(BaseUser):
     password: str
 
 
-class Role(BaseModel):
-    id: int
-    name: str
 
 class ReadUser(BaseUser):
     id: int
-    roles: list[Role]
 
 
 
