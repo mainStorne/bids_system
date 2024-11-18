@@ -43,3 +43,9 @@ bad_request_response = {
         'model': ErrorModel
     }
 }
+
+conflict_response = {
+    status.HTTP_409_CONFLICT: {
+        'model': ErrorModel
+    }
+}

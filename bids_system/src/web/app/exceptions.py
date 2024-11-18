@@ -1,0 +1,2 @@
+class FileDoesntSave(Exception):
+    pass

@@ -1,12 +1,14 @@
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, status
+
+from ...exceptions import FileDoesntSave
 from ...schemas.users import ReadUser, CreateUser, UpdateUser
 from ...schemas.files import FileRead
 from ...utils.users import user_manager
 from ...utils.crud import CrudAPIRouter
-from ...managers import BaseManager
-from ...dependencies.user import get_current_user
+from ...managers import BaseManager, FilesManager
+from ...dependencies.user import get_current_user, user_or_404
 from ...dependencies.session import get_session
 from ...storage.db.models import Role, File
 from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response
@@ -16,7 +18,7 @@ from crud import Context
 logger = getLogger(__name__)
 
 role_manager = BaseManager(Role)
-file_manager = BaseManager(File)
+files_manager = FilesManager(File)
 
 r = APIRouter()
 
@@ -62,20 +64,23 @@ async def me(update_to: UpdateUser,
 @r.get('/{id}/files',
        response_model=list[FileRead],
        responses={**missing_token_or_inactive_user_response, **not_found_response},
-       dependencies=[Depends(get_current_user(active=True))]
+       dependencies=[Depends(get_current_user(active=True)), Depends(user_or_404)]
        )
-async def files(id: int, session: AsyncSession = Depends(get_session)):
-    await user_manager.get_or_404(session, id=id)
-    return await file_manager.list(session, user=[id])
+async def files(session: AsyncSession = Depends(get_session)):
+    return await files_manager.list(session, user=[id])
 
 
 @r.post('/{id}/files',
         response_model=FileRead,
-        responses={**missing_token_or_inactive_user_response, **not_found_response}
+        responses={**missing_token_or_inactive_user_response, **not_found_response,
+                   }
         )
-async def files(id: int, session: AsyncSession = Depends(get_session)):
-    user = await user_manager.get_or_404(session, id=id)
-    return await file_manager.create(session, user=[user.id])
+async def files(upload_file: UploadFile, user=Depends(user_or_404), session: AsyncSession = Depends(get_session)):
+    # TODO: maybe create multiple upload files?
+    try:
+        return await files_manager.create_file(session, upload_file, user=[user.id])
+    except FileDoesntSave:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
 
 r.include_router(crud)
