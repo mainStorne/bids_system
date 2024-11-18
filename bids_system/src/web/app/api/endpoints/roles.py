@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from web.crud import RouteDict
+from web.crud import Context
 from web.crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response, forbidden_response
 from ...dependencies.session import get_session
 from ...dependencies.user import get_current_user
@@ -17,26 +17,50 @@ from fastapi import APIRouter
 role_manager = RoleManager()
 
 
-class Crud(CrudAPIRouter):
+# class Crud(CrudAPIRouter):
+#
+#     def _get_one(self, *args: Any, **kwargs: Any):
+#         async def func(request: Request, id: int, session: AsyncSession = Depends(self.get_session)):
+#             return await self.manager.get_or_404(session, id=id)
+#
+#         async def route(role: Role = Permission('view', func)):
+#             return role
+#
+#         return route
 
+
+# crud = Crud(
+#     role_manager,
+#     RoleRead, RoleCreate, RoleUpdate,
+#     get_one_route=RouteDict(dependencies=[Depends(get_current_user())],
+#                                                    responses={**missing_token_or_inactive_user_response,
+#                                                               **not_found_response, **forbidden_response})
+#
+# )
+
+ctx = Context(manager=role_manager, get_session=get_session,
+        schema=RoleRead, create_schema=RoleCreate, update_schema=RoleUpdate
+        )
+
+crud = CrudAPIRouter(ctx)
+
+class Crud(CrudAPIRouter):
     def _get_one(self, *args: Any, **kwargs: Any):
+
         async def func(request: Request, id: int, session: AsyncSession = Depends(self.get_session)):
             return await self.manager.get_or_404(session, id=id)
 
+        @self.get(
+            path='/{id}',
+            response_model=self.schema,
+            dependencies=[Depends(get_current_user())],
+            responses={**missing_token_or_inactive_user_response, **not_found_response}
+
+        )
         async def route(role: Role = Permission('view', func)):
             return role
 
-        return route
 
-
-crud = Crud(
-    role_manager,
-    RoleRead, RoleCreate, RoleUpdate,
-    get_one_route=RouteDict(dependencies=[Depends(get_current_user())],
-                                                   responses={**missing_token_or_inactive_user_response,
-                                                              **not_found_response, **forbidden_response})
-
-)
 
 r = APIRouter()
 

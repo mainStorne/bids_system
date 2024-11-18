@@ -4,10 +4,10 @@ from typing import Any, Callable, Generic, List, Optional, Type, Union, TypeVar,
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 from fastapi.types import DecoratedCallable
+from fastapi_sqlalchemy_toolkit import ModelManager
 from pydantic import BaseModel
 from .openapi_responses import not_found_response
 
-PydanticModelT = TypeVar("PydanticModelT", bound=BaseModel)
 NOT_FOUND = HTTPException(404, "Item not found")
 
 
@@ -18,98 +18,57 @@ class RouteDict(TypedDict, total=False):
     responses: dict
 
 
-class CRUDGenerator(Generic[PydanticModelT], APIRouter, ABC):
-    schema: Type[PydanticModelT]
-    create_schema: Type[PydanticModelT]
-    update_schema: Type[PydanticModelT]
+class Context(TypedDict, total=False):
+    schema: Type[BaseModel]
+    manager: ModelManager
+    get_session: Callable
+    create_schema: Type[BaseModel]
+    update_schema: Type[BaseModel]
+    get_all_route: bool
+    get_one_route: bool
+    create_route: bool
+    update_route: bool
+    delete_one_route: bool
+    delete_all_route: bool
+
+
+class CRUDTemplate(APIRouter):
+    schema: Type[BaseModel]
+    create_schema: Type[BaseModel]
+    update_schema: Type[BaseModel]
     _base_path: str = "/"
 
     def __init__(
             self,
-            schema: Type[PydanticModelT],
-            create_schema: Optional[Type[PydanticModelT]] = None,
-            update_schema: Optional[Type[PydanticModelT]] = None,
-            prefix: Optional[str] = None,
-            tags: Optional[List[str]] = None,
-            paginate: Optional[int] = None,
-            get_all_route: RouteDict = None,
-            get_one_route: RouteDict = None,
-            create_route: RouteDict = None,
-            update_route: RouteDict = None,
-            delete_one_route: RouteDict = None,
-            delete_all_route: RouteDict = None,
+            context: Context,
             **kwargs: Any,
     ) -> None:
 
-
-        self.schema = schema
-        self.create_schema = create_schema
-        self.update_schema = update_schema
-
         super().__init__(**kwargs)
 
-        if get_all_route:
-            self.add_api_route(
-                **{'path': "/",
-                   'endpoint': self._get_all(),
-                   'methods': ["GET"],
-                   'response_model': List[self.schema],
-                   'summary': "Get All",
-                   **get_all_route
-                   })
+        self.ctx = context
+        self.schema = self.ctx['schema']
+        self.create_schema = self.ctx['create_schema']
+        self.update_schema  = self.ctx['update_schema']
+        self.manager = self.ctx['manager']
+        self.get_session = self.ctx['get_session']
+        if self.ctx.get('get_all_route', True):
+            self._get_all()
 
-        if create_route:
-            self.add_api_route(
-                **{'path': "/",
-                   'endpoint': self._create(),
-                   'methods': ["POST"],
-                   'response_model': self.schema,
-                   'summary': "Create One",
-                   'status_code': status.HTTP_201_CREATED,
-                   **create_route
-                   })
+        if self.ctx.get('create_route', True):
+            self._create()
 
+        if self.ctx.get('get_one_route', True):
+            self._get_one()
 
-        if get_one_route:
-            self.add_api_route(
-                **{'path': "/{id}",
-                   'endpoint': self._get_one(),
-                   'methods': ["GET"],
-                   'response_model': self.schema,
-                   'summary': "Get One",
-                   **get_one_route
-                   })
+        if self.ctx.get('update_route', True):
+            self._update()
 
-        if update_route:
-            self.add_api_route(
-                **{'path': "/{id}",
-                   'endpoint': self._update(),
-                   'methods': ["PATCH"],
-                   'response_model': self.schema,
-                   'summary': "Update One",
-                   **update_route
-                   })
+        if self.ctx.get('delete_one_route', True):
+            self._delete_one()
 
-        if delete_one_route:
-            self.add_api_route(
-                **{'path': "/{id}",
-                   'endpoint': self._delete_one(),
-                   'methods': ["DELETE"],
-                   'summary': "Delete One",
-                   'status_code': status.HTTP_204_NO_CONTENT,
-                   **delete_one_route
-                   })
-
-
-        if delete_all_route:
-            self.add_api_route(
-                **{'path': "/",
-                   'endpoint': self._delete_all(),
-                   'methods': ["DELETE"],
-                   'summary': "Delete All",
-                   'status_code': status.HTTP_204_NO_CONTENT,
-                   **delete_all_route
-                   })
+        if self.ctx.get('delete_all_route', True):
+            self._delete_all()
 
     def api_route(
             self, path: str, *args: Any, **kwargs: Any
@@ -118,30 +77,6 @@ class CRUDGenerator(Generic[PydanticModelT], APIRouter, ABC):
         methods = kwargs["methods"] if "methods" in kwargs else ["GET"]
         self.remove_api_route(path, methods)
         return super().api_route(path, *args, **kwargs)
-
-    # def get(
-    #         self, path: str, *args: Any, **kwargs: Any
-    # ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-    #     self.remove_api_route(path, ["Get"])
-    #     return super().get(path, *args, **kwargs)
-    #
-    # def post(
-    #         self, path: str, *args: Any, **kwargs: Any
-    # ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-    #     self.remove_api_route(path, ["POST"])
-    #     return super().post(path, *args, **kwargs)
-    #
-    # def put(
-    #         self, path: str, *args: Any, **kwargs: Any
-    # ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-    #     self.remove_api_route(path, ["PUT"])
-    #     return super().put(path, *args, **kwargs)
-    #
-    # def delete(
-    #         self, path: str, *args: Any, **kwargs: Any
-    # ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-    #     self.remove_api_route(path, ["DELETE"])
-    #     return super().delete(path, *args, **kwargs)
 
     def remove_api_route(self, path: str, methods: List[str]) -> None:
         methods_ = set(methods)
@@ -176,4 +111,3 @@ class CRUDGenerator(Generic[PydanticModelT], APIRouter, ABC):
     @abstractmethod
     def _delete_all(self, *args: Any, **kwargs: Any) -> Callable[..., Any]:
         raise NotImplementedError
-

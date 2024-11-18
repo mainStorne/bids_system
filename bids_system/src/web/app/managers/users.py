@@ -38,8 +38,7 @@ class UsersManager(BaseManager):
             user = await super().create(session, in_obj, ['roles'], commit=False, roles=[], **attrs)
             stmt = select(Role).where(Role.name == 'role:costumer')
             costumer_role = await session.scalar(stmt)
-            user_role = Role(name=f'user:{user.login}')
-            user.roles = [costumer_role, user_role]
+            user.roles = [costumer_role]
 
         return user
 
