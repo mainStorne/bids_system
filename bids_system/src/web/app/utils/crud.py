@@ -1,6 +1,6 @@
-from web.crud import CRUDTemplate
+from crud import CRUDTemplate
 from ..dependencies.user import get_current_user
-from web.crud.openapi_responses import (
+from crud.openapi_responses import (
     missing_token_or_inactive_user_response, auth_responses, not_found_response,
 )
 from typing import Any

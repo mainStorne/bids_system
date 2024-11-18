@@ -3,7 +3,7 @@ from fastapi_users.authentication.transport.bearer import BearerTransport as _Be
 from fastapi_users.openapi import OpenAPIResponseType
 from starlette import status
 from starlette.responses import Response
-from web.crud.openapi_responses import no_content_response
+from crud.openapi_responses import no_content_response
 
 
 class BearerTransport(_BearerTransport):

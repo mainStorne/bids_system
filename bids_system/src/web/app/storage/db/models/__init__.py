@@ -1,3 +1,3 @@
 from .base import Base
-from .users import User, Role, UserRole
+from .users import User, Role, UserRole, File, UserFile
 from .bids import Bid, BidMaster, BidStatus

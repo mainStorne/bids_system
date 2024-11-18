@@ -34,8 +34,5 @@ class ReadUser(BaseUser):
     id: int
 
 
-
-
-
-
 UpdateUser = make_partial_model(CreateUser)
+

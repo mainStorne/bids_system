@@ -12,9 +12,11 @@ RUN pip install -r requirements.txt
 FROM python:3.12-slim
 COPY --from=builder /opt/venv /opt/venv
 COPY src /src
-WORKDIR /src/web
-RUN chmod +x alembic.sh
+WORKDIR /src
+RUN chmod +x /src/web/alembic.sh
+RUN useradd -ms /bin/bash developer
+USER developer
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH='/src:$PYTHONPATH'
 ENTRYPOINT [ "/src/web/alembic.sh" ]
-CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+CMD ["uvicorn", "web.app.app:app", "--host", "0.0.0.0", "--port", "80", "--reload"]

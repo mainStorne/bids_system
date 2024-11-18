@@ -13,8 +13,9 @@ ${imports if imports else ""}
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 
-class Factory(SQLAlchemyFactory):
-    __set_relationships__ = True
+#class Factory(SQLAlchemyFactory):
+#    __model__ =
+#    __set_relationships__ = True
 
 
 # revision identifiers, used by Alembic.
@@ -28,8 +29,8 @@ def upgrade() -> None:
     ${upgrades if upgrades else "pass"}
     async def seed_db(connection: AsyncConnection):
         session = AsyncSession(bind=connection)
-        Factory.__async_session__ = session
-        await factory.create_batch_async(10)
+#        Factory.__async_session__ = session
+#        await factory.create_batch_async(10)
 
 
     op.run_async(seed_db)

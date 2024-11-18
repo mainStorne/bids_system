@@ -23,6 +23,7 @@ class User(IDMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
+    files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files')
 
     async def principals(self):
         roles = await self.awaitable_attrs.roles
@@ -45,3 +46,16 @@ class Role(IDMixin, Base):
             (Allow, f'{self.name}', 'view'),
             (Allow, 'role:admin', 'view'),
         ]
+
+
+class File(IDMixin, Base):
+    __tablename__ = 'files'
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    user: Mapped[list['User']] = relationship(back_populates='files', secondary='user_files')
+
+
+class UserFile(IDMixin, Base):
+    __tablename__ = 'user_files'
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    file_id: Mapped[int] = mapped_column(ForeignKey('files.id'))
