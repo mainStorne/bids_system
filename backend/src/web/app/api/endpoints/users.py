@@ -11,7 +11,7 @@ from ...managers import BaseManager, FilesManager
 from ...dependencies.user import get_current_user, user_or_404
 from ...dependencies.session import get_session
 from ...storage.db.models import Role, File
-from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response
+from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response, conflict_response
 from logging import getLogger
 from crud import Context
 
@@ -30,9 +30,6 @@ class Crud(CrudAPIRouter):
         @self.post(
             '/register',
             response_model=self.schema,
-            dependencies=[Depends(get_current_user())],
-            responses={**missing_token_or_inactive_user_response,
-                       }
         )
         async def route(request: Request, objs: create_schema, session: AsyncSession = Depends(self.get_session)):
             return await self.manager.create(session, objs)
@@ -73,12 +70,13 @@ async def files(session: AsyncSession = Depends(get_session)):
 @r.post('/{id}/files',
         response_model=FileRead,
         responses={**missing_token_or_inactive_user_response, **not_found_response,
+                   **conflict_response,
                    }
         )
 async def files(upload_file: UploadFile, user=Depends(user_or_404), session: AsyncSession = Depends(get_session)):
     # TODO: maybe create multiple upload files?
     try:
-        return await files_manager.create_file(session, upload_file, user=[user.id])
+        return await files_manager.create_user_file(session, upload_file, user=[user.id])
     except FileDoesntSave:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
