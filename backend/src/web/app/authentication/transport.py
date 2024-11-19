@@ -11,6 +11,11 @@ class BearerTransport(_BearerTransport):
         self.scheme = OAuth2PasswordBearer(tokenUrl, auto_error=False)
 
 
+    # async def get_login_response(self, token: str) -> Response:
+    #     bearer_response = BearerResponse(access_token=token, token_type="bearer")
+    #     return JSONResponse(model_dump(bearer_response))
+
+
     async def get_logout_response(self) -> Response:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 

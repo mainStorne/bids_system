@@ -1,12 +1,13 @@
 services:
-#
-#  frontend:
-#    build:
-#      context: frontend
-#      dockerfile: Dockerfile
-#    container_name: frontend
-#    volumes:
-#      - ./frontend/src:/app/src
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
   postgres:
     image: postgres
@@ -84,7 +85,7 @@ services:
      - ./backend/src/web/app/static:/www/data
    depends_on:
      - backend
-    #  - frontend
+     - frontend
 
 
 

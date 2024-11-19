@@ -8,6 +8,8 @@
     docker compose up
 ### Зайти в запущенный контейнер
     docker exec -it backend bash
+### Создание миграции
+    alembic revision --autogenerate
 ### Применение миграции
     alembic upgrade head
 

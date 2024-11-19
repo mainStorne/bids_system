@@ -30,7 +30,7 @@ def upgrade() -> None:
     async def seed_db(connection: AsyncConnection):
         session = AsyncSession(bind=connection)
 #        Factory.__async_session__ = session
-#        await factory.create_batch_async(10)
+#        await Factory.create_batch_async(10)
 
 
     op.run_async(seed_db)
