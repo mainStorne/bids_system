@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Optional
 import jwt
 from fastapi_users import models
@@ -5,10 +6,12 @@ from fastapi_users.jwt import decode_jwt, generate_jwt
 from fastapi_users.authentication.strategy import JWTStrategy as _JWTStrategy
 from sqlalchemy.ext.asyncio import AsyncSession
 from storage.db.models import User
+logger = getLogger(__name__)
+
 class JWTStrategy(_JWTStrategy):
 
     async def read_token(
-        self, token: Optional[str], session: AsyncSession,
+            self, token: Optional[str], session: AsyncSession,
     ) -> Optional[models.UP]:
         if token is None:
             return None
@@ -22,8 +25,10 @@ class JWTStrategy(_JWTStrategy):
                 return None
         except (jwt.PyJWTError, ValueError):
             return None
-        return await session.get(User, user_id)
+        user: User | None = await session.get(User, user_id)
 
+        logger.info('user acl %s', user.__acl__)
+        return user
 
     async def write_token(self, user: User) -> str:
         # token_urlsafe()
@@ -31,6 +36,3 @@ class JWTStrategy(_JWTStrategy):
         return generate_jwt(
             data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
         )
-
-
-

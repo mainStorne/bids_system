@@ -33,15 +33,13 @@ class UsersManager(BaseManager):
     ) -> ModelT:
         async with session.begin():
             in_obj.password = self.password_helper.hash(in_obj.password)
-
             user = await super().create(session, in_obj, ['roles'], commit=False, roles=[], **attrs)
             stmt = select(Role).where(Role.name == 'role:costumer')
             costumer_role = await session.scalar(stmt)
-            user.roles = [costumer_role]
+            user_role = Role(name=f'user:{user.login}')
+            user.roles = [costumer_role, user_role]
 
         return user
-
-
 
     async def authenticate(self, session: AsyncSession, credentials: OAuth2PasswordRequestForm):
         stmt = select(self.model).where(self.model.login == credentials.username)

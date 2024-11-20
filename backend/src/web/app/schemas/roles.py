@@ -8,6 +8,7 @@ class RoleBase(BaseModel):
 
 
 
+
 class RoleCreate(RoleBase):
     pass
 

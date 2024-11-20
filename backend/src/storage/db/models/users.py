@@ -25,9 +25,16 @@ class User(IDMixin, Base):
     roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
     files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files')
 
+
     async def principals(self):
         roles = await self.awaitable_attrs.roles
         return [role.name for role in roles] + ['role:admin'] if self.is_superuser else []
+
+
+    def __acl__(self):
+        return [
+            (Allow, f'user:{self.login}', 'view'),
+        ]
 
 
 class UserRole(IDMixin, Base):

@@ -18,9 +18,9 @@ class BaseUser(BaseModel):
 
     def __acl__(self):
         return [
-            (Allow, Authenticated, 'view'),
-            (Allow, 'role:admin', 'delete'),
-            (Allow, f'user:{self.login}', All)
+            (Allow, f'user:{self.login}', 'view'),
+            # (Allow, 'role:admin', All),
+            # (Allow, f'user:{self.login}', All)
         ]
 
 

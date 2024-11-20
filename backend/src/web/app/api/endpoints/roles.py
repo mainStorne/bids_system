@@ -16,33 +16,6 @@ from fastapi import APIRouter
 role_manager = RoleManager()
 
 
-# class Crud(CrudAPIRouter):
-#
-#     def _get_one(self, *args: Any, **kwargs: Any):
-#         async def func(request: Request, id: int, session: AsyncSession = Depends(self.get_session)):
-#             return await self.manager.get_or_404(session, id=id)
-#
-#         async def route(role: Role = Permission('view', func)):
-#             return role
-#
-#         return route
-
-
-# crud = Crud(
-#     role_manager,
-#     RoleRead, RoleCreate, RoleUpdate,
-#     get_one_route=RouteDict(dependencies=[Depends(get_current_user())],
-#                                                    responses={**missing_token_or_inactive_user_response,
-#                                                               **not_found_response, **forbidden_response})
-#
-# )
-
-ctx = Context(manager=role_manager, get_session=get_session,
-        schema=RoleRead, create_schema=RoleCreate, update_schema=RoleUpdate
-        )
-
-crud = CrudAPIRouter(ctx)
-
 class Crud(CrudAPIRouter):
     def _get_one(self, *args: Any, **kwargs: Any):
 
@@ -59,6 +32,15 @@ class Crud(CrudAPIRouter):
         async def route(role: Role = Permission('view', func)):
             return role
 
+
+
+
+
+ctx = Context(manager=role_manager, get_session=get_session,
+        schema=RoleRead, create_schema=RoleCreate, update_schema=RoleUpdate
+        )
+
+crud = Crud(ctx)
 
 
 r = APIRouter()
