@@ -1,14 +1,13 @@
 from typing import Callable, Any, List
 
 from fastapi_sqlalchemy_toolkit.model_manager import ModelT
-from sqlalchemy import UnaryExpression, Select, Row, select
+from sqlalchemy import UnaryExpression, Row, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
-from ..storage.db.models import UserRole, Role
+from storage.db.models import UserRole, Role
 from .base import BaseManager
 from logging import getLogger
 
-logger =getLogger(__name__)
 
 
 class RoleManager(BaseManager):

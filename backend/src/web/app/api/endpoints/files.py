@@ -1,5 +1,5 @@
 from ...managers import FilesManager
-from ...storage.db.models import File
+from storage.db.models import File
 from crud import Context
 from ...dependencies.session import get_session
 from ...schemas.files import FileCreate, FileRead, FileUpdate

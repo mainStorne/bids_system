@@ -1,18 +1,21 @@
 from inspect import Signature, Parameter
-from typing import Optional, Sequence, cast, Callable, Any
+from typing import Optional, Sequence, cast, Callable
 from fastapi import status, Depends, HTTPException
 from fastapi_users.authentication import AuthenticationBackend, Strategy
 from fastapi_users.authentication.authenticator import Authenticator as _Authenticator, DuplicateBackendNamesError, \
     EnabledBackendsDependency, name_to_variable_name, name_to_strategy_variable_name
-from makefun import with_signature
 from logging import getLogger
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from ..storage.db.models import User
+from storage.db.models import User
 
 logger = getLogger(__name__)
 
+
+# TODO create refresh and access tokens with redis
+# refresh token - one time token (30H)
+# access token - (30min)
+# create response for register route like {'refresh':..., 'access':...}
+# create new endpoint for refresh token
 
 class Authenticator(_Authenticator):
 
@@ -37,6 +40,7 @@ class Authenticator(_Authenticator):
         enabled_backends: Sequence[AuthenticationBackend] = (
             kwargs.get("enabled_backends", self.backends)
         )
+
         for backend in self.backends:
             if backend in enabled_backends:
                 token = kwargs[name_to_variable_name(backend.name)]
@@ -62,8 +66,6 @@ class Authenticator(_Authenticator):
             raise HTTPException(status_code=status_code)
 
         return user, token
-
-
 
     def _get_dependency_signature(
             self, get_enabled_backends: Optional[EnabledBackendsDependency] = None

@@ -8,11 +8,9 @@ Create Date: 2024-11-18 20:54:12.082059
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncConnection
-from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
-from web.app.storage.db.models import Role
+from storage.db.models import Role
 
 #class Factory(SQLAlchemyFactory):
 #    __model__ =

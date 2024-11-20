@@ -1,4 +1,4 @@
-from web.app.storage.cache.redis_client import RedisClient
+from storage.cache.redis_client import RedisClient
 from ..conf import connection_pool
 
 

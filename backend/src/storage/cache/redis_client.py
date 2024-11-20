@@ -1,5 +1,5 @@
 from typing import Literal
-from web.app.storage.db.models.users import User
+from storage.db.models.users import User
 from redis.asyncio import Redis
 
 

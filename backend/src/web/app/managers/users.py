@@ -1,13 +1,12 @@
-from typing import Iterable, Any, Optional, Callable, List
+from typing import Iterable, Any, Optional
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_sqlalchemy_toolkit.model_manager import CreateSchemaT, ModelT
-from fastapi_users.manager import BaseUserManager
 from fastapi_users.password import PasswordHelperProtocol, PasswordHelper
-from sqlalchemy import UnaryExpression, select, Select, Row
+from sqlalchemy import UnaryExpression, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute, joinedload
-from ..storage.db.models import User, Role, UserRole
+from sqlalchemy.orm import InstrumentedAttribute
+from storage.db.models import User, Role
 from .base import BaseManager
 
 

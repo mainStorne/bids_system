@@ -10,7 +10,7 @@ from ...utils.crud import CrudAPIRouter
 from ...managers import BaseManager, FilesManager
 from ...dependencies.user import get_current_user, user_or_404
 from ...dependencies.session import get_session
-from ...storage.db.models import Role, File
+from storage.db.models import Role, File
 from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response, conflict_response
 from logging import getLogger
 from crud import Context

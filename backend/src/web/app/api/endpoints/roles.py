@@ -6,12 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from crud import Context
 from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response
 from ...dependencies.session import get_session
-from ...dependencies.user import get_current_user
+from ...dependencies.user import get_current_user, Permission
 from ...utils.crud import CrudAPIRouter
 from ...managers import RoleManager
-from ...storage.db.models import Role
+from storage.db.models import Role
 from ...schemas.roles import RoleCreate, RoleRead, RoleUpdate
-from ...dependencies.user_permissions import Permission
 from fastapi import APIRouter
 
 role_manager = RoleManager()
