@@ -27,10 +27,12 @@ class User(IDMixin, Base):
     files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files', cascade='all, delete')
     sessions: Mapped[list['Session']] = relationship(back_populates='user', cascade='all, delete')
 
+    def _get_user_roles(self, roles: list['Role']):
+        return [role.name for role in roles] + ['role:admin'] if self.is_superuser else []
 
     async def principals(self):
         roles = await self.awaitable_attrs.roles
-        return [role.name for role in roles] + ['role:admin'] if self.is_superuser else []
+        return self._get_user_roles(roles)
 
 
     def __acl__(self):
@@ -56,7 +58,7 @@ class Role(IDMixin, Base):
     def __acl__(self):
         return [
             (Allow, f'{self.name}', 'view'),
-            (Allow, 'role:admin', 'view'),
+            (Allow, 'role:admin', All),
         ]
 
 
@@ -65,6 +67,13 @@ class File(IDMixin, Base):
     name: Mapped[str] = mapped_column(String, nullable=True)
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     user: Mapped[list['User']] = relationship(back_populates='files', secondary='user_files', cascade='all, delete')
+
+    def __acl__(self):
+        return [
+            (Allow, f'role:owner', 'view'),
+            (Allow, 'role:admin', All),
+        ]
+
 
 
 class UserFile(IDMixin, Base):
