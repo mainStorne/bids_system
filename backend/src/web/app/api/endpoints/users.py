@@ -34,12 +34,10 @@ class Crud(CrudAPIRouter):
         @self.post(
             '/register',
             responses={**backend.transport.get_openapi_login_responses_success()}
-            # response_model=self.schema,
         )
-        async def route(request: Request, objs: create_schema, session: AsyncSession = Depends(self.get_session),
-                        strategy: Strategy = Depends(backend.get_strategy),):
-            user = await self.manager.create(session, objs)
-            return await backend.login(strategy, user)
+        async def route(request: Request, objs: create_schema, session: AsyncSession = Depends(self.get_session)):
+            return await self.manager.create(session, objs)
+
 
 
 ctx = Context(manager=user_manager, get_session=get_session,
@@ -74,18 +72,22 @@ async def files(session: AsyncSession = Depends(get_session)):
     return await files_manager.list(session, user=[id])
 
 
-@r.post('/{id}/files',
-        response_model=FileRead,
+@r.post('/my/files',
+        response_model=list[FileRead],
         responses={**missing_token_or_inactive_user_response, **not_found_response,
                    **conflict_response,
                    }
         )
-async def files(upload_file: UploadFile, user=Depends(user_or_404), session: AsyncSession = Depends(get_session)):
+async def files(upload_files: list[UploadFile], user=Depends(get_current_user(active=True)),
+                session: AsyncSession = Depends(get_session)):
     # TODO: maybe create multiple upload files?
     try:
-        return await files_manager.create_user_file(session, upload_file, user=[user.id])
+        result = []
+        for upload_file in upload_files:
+            result.append(await files_manager.create_user_file(session, upload_file, user=[user.id]))
     except FileDoesntSave:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
+    return result
 
 
 r.include_router(crud)
