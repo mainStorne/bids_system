@@ -10,12 +10,6 @@ class BaseUser(BaseModel):
     first_name: str
     middle_name: str
     last_name: str
-
-    # TODO: change this on read user
-    is_superuser: bool
-    is_active: bool
-    is_verified: bool
-
     def __acl__(self):
         return [
             (Allow, f'user:{self.login}', 'view'),
@@ -32,6 +26,9 @@ class CreateUser(BaseUser):
 
 class ReadUser(BaseUser):
     id: int
+    is_superuser: bool
+    is_active: bool
+    is_verified: bool
 
 
 UpdateUser = make_partial_model(CreateUser)

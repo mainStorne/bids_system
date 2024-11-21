@@ -38,9 +38,11 @@ class FilesManager(BaseManager):
                     create_data[field] = default
 
             await self.run_db_validation(session, create_data)
+            logger.info('data %s', create_data)
             db_obj = self.model(**create_data)
             session.add(db_obj)
-            await self.save(session)
+            # await self.save(session)
+            await session.commit()
 
 
         return db_obj

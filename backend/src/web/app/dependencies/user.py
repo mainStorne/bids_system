@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from fastapi_permissions import Everyone, Authenticated, configure_permissions
+from fastapi_permissions import Everyone, Authenticated, configure_permissions, Allow
 from ..utils.users import authenticator
 from .session import get_session
 from logging import getLogger
@@ -25,6 +25,7 @@ async def get_user_principals(user=Depends(authenticator.current_user(active=Tru
     return principals
 
 
+AclBatchPermission = [(Allow, 'role:admin', 'view')]
 
 
 Permission = configure_permissions(get_user_principals)

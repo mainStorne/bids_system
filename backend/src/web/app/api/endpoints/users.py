@@ -33,7 +33,7 @@ class Crud(CrudAPIRouter):
 
         @self.post(
             '/register',
-            responses={**backend.transport.get_openapi_login_responses_success()},
+            responses={**missing_token_or_inactive_user_response},
             response_model=self.schema,
 
         )
@@ -81,7 +81,6 @@ async def files(session: AsyncSession = Depends(get_session), user=Depends(user_
         )
 async def files(upload_files: list[UploadFile], user=Depends(get_current_user(active=True)),
                 session: AsyncSession = Depends(get_session)):
-    # TODO: maybe create multiple upload files?
     try:
         result = []
         for upload_file in upload_files:

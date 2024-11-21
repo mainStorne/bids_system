@@ -1,4 +1,4 @@
-from fastapi_permissions import Allow, Deny, All
+from fastapi_permissions import Allow, Deny, All, Authenticated
 from sqlalchemy import SmallInteger, ForeignKey, String, Boolean, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,9 +23,9 @@ class User(IDMixin, Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
-    files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files')
-    sessions: Mapped[list['Session']] = relationship(back_populates='user')
+    roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles', cascade='all, delete')
+    files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files', cascade='all, delete')
+    sessions: Mapped[list['Session']] = relationship(back_populates='user', cascade='all, delete')
 
 
     async def principals(self):
@@ -38,6 +38,7 @@ class User(IDMixin, Base):
             (Allow, f'user:{self.login}', 'view'),
             (Allow, 'role:admin', All),
             (Allow, 'role:consumer', 'view'),
+            (Allow, Authenticated, 'batch')
         ]
 
 
@@ -61,9 +62,9 @@ class Role(IDMixin, Base):
 
 class File(IDMixin, Base):
     __tablename__ = 'files'
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=True)
     file_path: Mapped[str] = mapped_column(String, nullable=False)
-    user: Mapped[list['User']] = relationship(back_populates='files', secondary='user_files')
+    user: Mapped[list['User']] = relationship(back_populates='files', secondary='user_files', cascade='all, delete')
 
 
 class UserFile(IDMixin, Base):
