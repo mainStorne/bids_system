@@ -23,7 +23,7 @@ class User(IDMixin, Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
+    roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles', innerjoin=True)
     files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files')
     sessions: Mapped[list['Session']] = relationship(back_populates='user')
 
