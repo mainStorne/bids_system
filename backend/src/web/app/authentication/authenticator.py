@@ -43,12 +43,16 @@ class Authenticator(_Authenticator):
 
         for backend in self.backends:
             if backend in enabled_backends:
+                logger.info('kwargs is %s', kwargs)
                 token = kwargs[name_to_variable_name(backend.name)]
+                logger.info('token is %s', token)
                 strategy: Strategy = kwargs[
                     name_to_strategy_variable_name(backend.name)
                 ]
+                logger.info('strategy is %s', strategy)
                 if token is not None:
                     user = await strategy.read_token(token, session)
+
                     if user:
                         break
 

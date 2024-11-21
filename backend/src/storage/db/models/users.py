@@ -1,6 +1,7 @@
-from fastapi_permissions import Allow, Deny
+from fastapi_permissions import Allow, Deny, All
 from sqlalchemy import SmallInteger, ForeignKey, String, Boolean, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from .base import Base, IDMixin
 
 
@@ -24,6 +25,7 @@ class User(IDMixin, Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     roles: Mapped[list['Role']] = relationship(back_populates='users', secondary='user_roles')
     files: Mapped[list['File']] = relationship(back_populates='user', secondary='user_files')
+    sessions: Mapped[list['Session']] = relationship(back_populates='user')
 
 
     async def principals(self):
@@ -34,6 +36,8 @@ class User(IDMixin, Base):
     def __acl__(self):
         return [
             (Allow, f'user:{self.login}', 'view'),
+            (Allow, 'role:admin', All),
+            (Allow, 'role:consumer', 'view'),
         ]
 
 

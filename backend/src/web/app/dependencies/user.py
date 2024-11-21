@@ -25,4 +25,6 @@ async def get_user_principals(user=Depends(authenticator.current_user(active=Tru
     return principals
 
 
+
+
 Permission = configure_permissions(get_user_principals)

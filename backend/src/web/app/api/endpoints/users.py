@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi_permissions import Allow
+from fastapi_users.authentication import Strategy
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, status
 
@@ -16,6 +17,7 @@ from storage.db.models import Role, File, User
 from crud.openapi_responses import missing_token_or_inactive_user_response, not_found_response, conflict_response
 from logging import getLogger
 from crud import Context
+from ...utils.users import backend
 
 logger = getLogger(__name__)
 
@@ -31,37 +33,13 @@ class Crud(CrudAPIRouter):
 
         @self.post(
             '/register',
-            response_model=self.schema,
+            responses={**backend.transport.get_openapi_login_responses_success()}
+            # response_model=self.schema,
         )
-        async def route(request: Request, objs: create_schema, session: AsyncSession = Depends(self.get_session)):
-            return await self.manager.create(session, objs)
-
-    def _get_one(self, *args: Any, **kwargs: Any):
-
-        def get_acls(user: User):
-            return [
-            (Allow, f'user:{user.login}', 'view'),
-        ]
-
-        async def func(request: Request, id: int, session: AsyncSession = Depends(self.get_session)):
-            user1 = await session.get(User, id)
-            user: User = await self.manager.get_or_404(session, id=id)
-            logger.info('response from crud %s', user)
-            principals = get_acls(user)
-            # logger.info('user dict is %s', user.__acl__())
-            logger.info('user1 dict is %s', user1.__acl__())
-            logger.info('acls %s', principals)
-            return user
-
-        @self.get(
-            path='/{id}',
-            response_model=self.schema,
-            dependencies=[Depends(get_current_user())],
-            responses={**missing_token_or_inactive_user_response, **not_found_response}
-
-        )
-        async def route(user: User = Permission('view', func)):
-            return user
+        async def route(request: Request, objs: create_schema, session: AsyncSession = Depends(self.get_session),
+                        strategy: Strategy = Depends(backend.get_strategy),):
+            user = await self.manager.create(session, objs)
+            return await backend.login(strategy, user)
 
 
 ctx = Context(manager=user_manager, get_session=get_session,

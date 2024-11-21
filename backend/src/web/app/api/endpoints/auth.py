@@ -1,12 +1,15 @@
 """Generate a router with login/logout routes for an authentication backend."""
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
 from fastapi_users import models
 from fastapi_users.authentication import AuthenticationBackend, Authenticator, Strategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users.router.common import ErrorCode, ErrorModel
+from typing import Annotated
+from ...authentication.strategy import JWTStrategy
 from ...utils.users import authenticator, backend, user_manager
+from ...authentication.transport import TokenResponse
 from ...dependencies.session import get_session
 
 r = APIRouter()
@@ -85,3 +88,14 @@ async def logout(
 ):
     user, token = user_token
     return await backend.logout(strategy, user, token)
+
+
+@r.post(
+    "/refresh_token", name=f"auth:{backend.name}.refresh",
+    responses={**backend.transport.get_openapi_login_responses_success()},
+    response_model=TokenResponse
+)
+async def refresh(refresh_token: Annotated[str, Body(embed=True)],
+                  strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy), ):
+    strategy: JWTStrategy
+    return await strategy.refresh_token(refresh_token)
