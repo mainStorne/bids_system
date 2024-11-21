@@ -52,6 +52,7 @@ class JWTStrategy(_JWTStrategy):
         return {'access_token': access_token, 'refresh_token': refresh_token, 'type': 'refresher'}
 
     def generate_pair_of_tokens(self, payload: dict):
+
         payload['exp'] = datetime.now(timezone.utc) + self.lifetime_seconds
         access_token = jwt.encode(payload.copy(), self.encode_key, algorithm=self.algorithm)
         payload['exp'] = datetime.now(timezone.utc) + self.refresh_token_lifetime

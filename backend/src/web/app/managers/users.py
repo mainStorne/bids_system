@@ -33,11 +33,10 @@ class UsersManager(BaseManager):
     ) -> ModelT:
         async with session.begin():
             in_obj.password = self.password_helper.hash(in_obj.password)
-            user = await super().create(session, in_obj, ['roles'], commit=False, roles=[], **attrs)
+            user = await super().create(session, in_obj, ['roles'], commit=False, **attrs)
             stmt = select(Role).where(Role.name == 'role:costumer')
             costumer_role = await session.scalar(stmt)
-            user_role = Role(name=f'user:{user.login}')
-            user.roles = [costumer_role, user_role]
+            user.roles = [costumer_role]
 
         return user
 
