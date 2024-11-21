@@ -44,6 +44,14 @@ class JWTStrategy(_JWTStrategy):
         if refresh_token is None:
             return refresh_token
 
+        async with asynccontextmanager(get_session)() as session:
+            session: AsyncSession
+            user = await session.get(User, payload['sub'])
+            if user is None:
+                return user
+            principals = await user.principals()
+
+        payload['roles'] = principals
         access_token, refresh_token = self.generate_pair_of_tokens(payload)
         async with asynccontextmanager(get_redis)() as redis:
             redis: Redis
@@ -104,9 +112,10 @@ class JWTStrategy(_JWTStrategy):
             session: AsyncSession
             user_session = Session(user_id=user.id)
             session.add(user_session)
+            principals = await user.principals()
             await session.commit()
 
-        payload = {"sub": str(user.id), "aud": self.token_audience, 'sid': str(user_session.id)}
+        payload = {"sub": str(user.id), "aud": self.token_audience, 'sid': str(user_session.id), 'roles': principals}
         access_token, refresh_token = self.generate_pair_of_tokens(payload)
 
         logger.info('start execute redis ')
