@@ -1,3 +1,12 @@
-const BASE_URL = "https://musical-pheasant-major.ngrok-free.app/api";
+import axios from "axios";
 
-export default BASE_URL;
+const API_URL = "http://localhost/api";
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+export default api;
