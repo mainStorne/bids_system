@@ -43,8 +43,8 @@ class User(IDMixin, Base):
 
 class UserRole(IDMixin, Base):
     __tablename__ = 'user_roles'
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id', ondelete='CASCADE'))
 
 
 class Role(IDMixin, Base):
@@ -68,5 +68,5 @@ class File(IDMixin, Base):
 
 class UserFile(IDMixin, Base):
     __tablename__ = 'user_files'
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    file_id: Mapped[int] = mapped_column(ForeignKey('files.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    file_id: Mapped[int] = mapped_column(ForeignKey('files.id', ondelete='CASCADE'))
