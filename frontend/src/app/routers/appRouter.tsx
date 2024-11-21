@@ -1,4 +1,3 @@
-import styles from "../styles/index.module.scss";
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -6,35 +5,34 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import { Layout } from "../layout";
-import { SendRequest } from "../../pages/sendRequest";
-import { Questionnaire } from "../../pages/questionnaire/ui/Questionnaire";
-import { WelcomeTest } from "../../pages/questionnaire/ui/WelcomeTest";
-import { AnswerTest } from "../../pages/questionnaire/ui/AnswerTest";
-import { ThanksPage } from "../../pages/thanksPage";
-import { SendTestPage } from "../../pages/sendTestPage";
-import { SendAnswer } from "../../pages/sendAnswer/ui/sendAnswer";
+import { ProductsPage } from "../../pages/ProductsPage";
+import { ProductDetailPage } from "../../pages/ProductDetailPage";
+import { LoginPage } from "../../pages/LoginPage";
+import { RegisterPage } from "../../pages/RegisterPage";
 
 export const AppRouter = () => {
-  const routers = createRoutesFromElements(
+  const routes = createRoutesFromElements(
     <Route path="/" element={<Layout />}>
-      <Route path="/send_request" element={<SendRequest />} />
-      <Route path="/welcome_test" element={<WelcomeTest />} />
-      <Route path="/answer_test" element={<AnswerTest />} />
-      <Route path="/test" element={<Questionnaire />} />
-      <Route path="/thank_you" element={<ThanksPage />} />
-      <Route path="/send_answer/:id" element={<SendAnswer />} />
-      <Route path="/send_test/:id" element={<SendTestPage />} />
-      {/* <Route path="/send_test" element={<SendTestPage />} /> */}
+      <Route path="/products" element={<ProductsPage />} />
+      <Route path="products/:id" element={<ProductDetailPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
     </Route>
   );
 
-  const router = createBrowserRouter(routers);
+  const router = createBrowserRouter(routes, {
+    future: {
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+    },
+  });
 
   return (
-    <div className={styles.app}>
+    <div>
       <RouterProvider router={router} />
     </div>
   );
 };
-
-export default AppRouter;
