@@ -1,1 +1,0 @@
-export { postCase } from "./sendTestEx";

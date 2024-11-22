@@ -1,1 +1,0 @@
-export { postResumes } from "./resumes";
